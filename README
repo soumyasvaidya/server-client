@@ -1,1 +1,188 @@
-MESSAGE NOT STORING
+##Client-Server operations Application
+
+This is a simple Java client-server chat application that allows users to communicate with each other over a network and perform various command operations. The application supports the following commands: MSGGET, MSGSTORE, SHUTDOWN, LOGIN, LOGOUT, and QUIT.
+
+##Features
+1. Allows single Client to chat with Server over a network using Java sockets.
+2. Supports command operations such as MSGGET, MSGSTORE, SHUTDOWN, LOGIN, LOGOUT, and QUIT.
+
+#Getting Started
+ ##Prerequisites
+   Before you can run the Java client-server chat application, you need to have the following prerequisites:
+    1. Java Development Kit (JDK) 8 or later installed on your machine.
+
+
+ ## Installation
+    tar -xvf vaidya_soumya_p1.tar
+    cd vaidya_soumya_p1
+    
+    # Compilation of code 
+       make Server.class Client.class
+
+ ## Usage
+   -->Server and Client should be started on two different terminal in the same directory
+   ###Start server
+    cd to CODE PATH
+    command :  java Server
+
+   ###Start Client
+    cd to CODE PATH
+    command :  java Client <IP address>
+    NOTE : To find IP address you can use below command
+	   hostname -I
+
+
+ ## COMMANDS SAMPLE OUTPUT
+    
+    # Sample for untar and Compiling code 
+    	[soumyasv@login:6 ~/Private]$ tar -xvf vaidya_soumya_p1.tar
+	vaidya_soumya_p1/
+	vaidya_soumya_p1/Client.java
+	vaidya_soumya_p1/Makefile
+	vaidya_soumya_p1/README
+	vaidya_soumya_p1/Server.java
+	vaidya_soumya_p1/usersDir.txt
+	vaidya_soumya_p1/messageDir.txt
+	[soumyasv@login:6 ~/Private]$ cd vaidya_soumya_p1
+	[soumyasv@login:6 ~/Private/vaidya_soumya_p1]$ ls
+	Client.java  Makefile  messageDir.txt  README  Server.java  usersDir.txt
+	[soumyasv@login:6 ~/Private/vaidya_soumya_p1]$ make Server.class Client.class
+	javac Server.java
+	javac Client.java
+
+    ### Server Terminal
+	
+	[soumyasv@login:1 ~/Private/cis527p1/server-client]$ java Server
+	client port54948
+	141.215.69.202  connected
+	Logged in successfull, User: root
+	user root logged out.
+	Login failed for the user
+	Logged in successfull, User: john
+	User disconnected.
+ 
+    ### Client Terminal
+
+    [soumyasv@login:4 ~/Private/cis527p1/server-client]$ java Client 141.215.69.202
+    Connected to Server.
+    MSGGET
+    200 OK
+    Try to be a rainbow in someone else's cloud.
+
+    MSGGET
+    200 OK
+    You do not find the happy life.
+
+    MSGGET
+    200 OK
+    Sometimes you will never know the value of a moment, until it becomes a memory.
+
+    MSGGET
+    200 OK
+    Happiness depends upon ourselves.
+
+    LOGIN root root01
+    200 OK
+
+    LOGIN john john01
+    You are already logged in as root
+
+    LOGOUT
+    200 OK
+
+    LOGIN abc abc1
+    410 Wrong UserID or password
+
+    LOGOUT
+    405 You are not logged in.
+
+    SHUTDOWN
+    402 User not allowed to execute this command.
+
+    MSGSTORE
+    200 OK
+    Please input new Message of the day to be added.
+    HELLO WORLD
+    429 Limit exceed for storing message: maxLimit=20 messages
+
+    LOGIN john john01
+    200 OK
+
+    QUIT
+    200 OK
+    Thank you for using the server.
+
+   
+
+
+## Known Bugs
+
+### Bug 1: Commands accepted only in capital letters
+   - Description: While user puts commands on client terminal only CAPITAL case commands are accepted
+   - Status: Unresolved
+   - Workaround: User should provide commands only in uppercase format.
+
+### Bug 2: Newline on client terminal for commands - MSGGET with 200 status
+   - Description: We are getting an extra newline on the client terminal because writeUTF is adding the newline.
+   - Status: Unresolved
+
+
+## Methods Description
+
+Here are some key methods used in the code:
+
+Client.java
+
+### getMessage (String serverResponse): This method is responsible for receiving a string serverResponse as its parameter and then printing it to the console. It serves as a utility function for displaying messages of the day received from a server.
+
+### storeMessage (String serverInput, String userInput, DataInputStream dataIpStr, DataOutputStream dataOpStr, BufferedReader input): This method checks whether the user is logged in. If the user is logged in, it accepts their input as a new "Message of the Day" and updates it accordingly. If the user is not logged in, it prints an error message to notify them of their unauthenticated status.
+
+### quit (DataInputStream dataIpStr, DataOutputStream dataOpStr, String serverInput, Socket clientSocket, boolean keepRunning): This method exits the application and closes any open socket for client when confirmed by server.
+
+### shutdown (DataInputStream dataIpStr, DataOutputStream dataOpStr, String serverInput, Socket clientSocket): This method closes all sockets and exits the application at both client and server's end.
+
+Server.java
+
+### sendMessageOfTheDay (DataOutputStream os, String [] motd, int active_motd, int motd_count, Socket clientSocket): This method is responsible for printing the upcoming message of the day to the user and reading the next message for access.
+
+### storeMessage(DataInputStream is, DataOutputStream os, String[] motd, int motd_count, String line, String active_user, Socket clientSocket): This method checks the user's authentication status. If the user is logged in (authenticated), it captures their input as a new Message of the Day and updates it. In the case of unauthenticated users, it prints an error message, ensuring that only authenticated users can modify the message directory file.
+
+### login (DataOutputStream os, String active_user, String line, Socket clientSocket): This method logs in the user by verifying their credentials against the records in the usersDir.txt file and issues an error message if the user is already logged in.
+
+### logout (DataOutputStream os, String active_user, Socket clientSocket): This method manages the logout process for logged-in users and handles error messaging for those not logged in.
+
+### quit (DataOutputStream os, Socket clientSocket): This method is responsible for displaying an acknowledgment message to the user just before they close the socket connection.
+
+### shutdown (DataOutputStream os, boolean keep_going, String active_user, Socket clientSocket): This method, when invoked by a user with root privileges, shuts down the server by closing sockets and streams, effectively ending the application.
+
+## File Descriptions
+
+Here's a brief description of the key files in this project:
+
+### Server.java - This file contains the server-side code for our application. It handles incoming client connections and message routing.
+Usage: Modify this file to customize server functionality.
+
+### Client.java - This file contains the client-side code for our application. It allows a single user to connect to the server and exchange messages with other clients.
+Usage: Customize this file to add features or functionality to the client.
+
+### messageDir.txt - This directory is utilized to store and manage messages that can be updated by authenticated users
+
+### usersDir.txt - This file contains a directory that stores user profiles and related information, facilitating the management and access of user-specific data within the system.
+
+
+
+## Contributions
+
+Here's a list of individual contributions to this project:
+
+1. Arati Khanolkar - https://github.com/arati501
+   - Implemented the client-side functionality.
+   - Fixed the bug related to message handling.
+   - Wrote the initial version of the README file.
+   - Optimized the code for better performance.
+
+2. Soumya Vaidya - https://github.com/soumyasvaidya
+   - Developed the server-side functionality.
+   - Added unit tests for message validation.
+   - Improved error handling and logging.
+   - Updated the documentation for the README file.

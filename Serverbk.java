@@ -39,7 +39,7 @@ public class Serverbk {
         }
         return active_motd;
     }
-    /* Login : Logs in the user by checking to see if their credentials match any users in the file users.txt and will print an error if they are already logged in */
+    /* Login : Logs in the user by checking to see if their credentials match any users in the file usersDir.txt and will print an error if they are already logged in */
     static String[] login(DataOutputStream os, String[] active_users, String line, Socket clientSocket) {
         try {
             Scanner inFS;
@@ -59,7 +59,7 @@ public class Serverbk {
             }
             else {
                 try {
-                    inFS = new Scanner(new File("src/users.txt")); // this will check the usernames stored in the server
+                    inFS = new Scanner(new File("src/usersDir.txt")); // this will check the usernames stored in the server
                     user_password = line.split(" ");
                     if (user_password.length != 3) {
                         try {
@@ -233,7 +233,7 @@ public class Serverbk {
                 os.writeUTF("Please input new MOTD to be added.");
                 line = is.readUTF(); //read input from the user
                 os.writeUTF("200 OK");
-                Writer wr = new FileWriter("src/motd.txt",true);
+                Writer wr = new FileWriter("src/messageDir.txt",true);
                 BufferedWriter br = new BufferedWriter(wr);
                 br.write(line);
                 br.newLine();
@@ -301,7 +301,7 @@ public class Serverbk {
         Scanner inFS; //file input
         try { //populating the array of default MOTDs
             Arrays.fill(active_users, "");
-            inFS = new Scanner(new File("src/motd.txt"));
+            inFS = new Scanner(new File("src/messageDir.txt"));
             while ((inFS.hasNextLine())) {
                 line = inFS.nextLine();
                 motd[motd_count] = line;

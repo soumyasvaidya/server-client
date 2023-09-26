@@ -11,7 +11,7 @@ import java.util.logging.Logger;
 
 public class Client
 {
-    public static final int SERVER_PORT = 6562;
+    public static final int SERVER_PORT = 9591;
 
     /*
      * getMessage(): This message receives the message of the day from server
@@ -53,8 +53,7 @@ public class Client
             dataIpStr.close();
             clientSocket.close();
             keepRunning = false;
-            System.exit(0);
-            //System.exit(SERVER_PORT);
+            System.exit(SERVER_PORT); //using custom exit code as server port number to close client
         } catch (IOException ex) {
             Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -71,7 +70,7 @@ public class Client
                 dataOpStr.close();
                 dataIpStr.close();
                 clientSocket.close();
-                System.exit(2);
+                System.exit(2); //using exit code 2 for exiting when SHUTDOWN
             }
         } catch (IOException ex) {
             Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
@@ -98,6 +97,8 @@ public class Client
 
         try
         {
+            /*InetAddress IP = InetAddress. getLocalHost();*/
+
             clientSocket = new Socket(args[0], SERVER_PORT);
             dataOpStr = new DataOutputStream(clientSocket.getOutputStream());
             dataIpStr = new DataInputStream(clientSocket.getInputStream());
@@ -160,7 +161,7 @@ public class Client
     }
 
     /*
-     * messageHandler(): This method handles incoming chat messages and processes them.
+     * messageHandler(): This method handles incoming server messages and processes them.
      */
     static class messageHandler implements Runnable {
 
@@ -180,7 +181,6 @@ public class Client
                     System.out.println("The server is at maximum capacity and cannot accept additional connections at this time. \n");
                 }
                 else {
-                    System.out.println("Connected to the server. \n");
                     while(true) {
                         if(!is.ready()) {
                             try {

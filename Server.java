@@ -12,11 +12,9 @@ import java.util.logging.Logger;
 import java.util.Scanner;
 
 public class Server {
-    public static final int SERVER_PORT = 6562;
+    public static final int SERVER_PORT = 9591;
     static public int messageCount;
-    //static Socket[] sockets;
     static Socket socket;
-    //static ServerSocket myServerice = null;
     static String[] messageOfTheDay = new String[20];
     static boolean serverContinue = true;
 
@@ -40,7 +38,7 @@ public class Server {
     }
 
 
-    /* Login : Logs in the user by checking to see if their credentials match any users in the file users.txt and will print an error if they are already logged in */
+    /* Login : Logs in the user by checking to see if their credentials match any users in the file usersDir.txt and will print an error if they are already logged in */
     static String loginUser(DataOutputStream outputStream, String activeUser, String loginArgs, Socket clientSocket) {
         try {
             Scanner inputScanner;
@@ -53,7 +51,7 @@ public class Server {
             }
             else {
                 try {
-                    inputScanner = new Scanner(new File("src/users.txt")); // this will check the usernames stored in the server
+                    inputScanner = new Scanner(new File("usersDir.txt")); // this will check the usernames stored in the server
                     inputLoginPassword = loginArgs.split(" ");
                     if (inputLoginPassword.length != 3) {
                         try {
@@ -138,18 +136,23 @@ public class Server {
             dataOutputStream = new DataOutputStream(client.getOutputStream());
             if(currentUser.equals("")) {
                 dataOutputStream.writeUTF("401 You are not logged in, please log in first.");
-                dataOutputStream.writeUTF("");
+                //dataOutputStream.writeUTF("");
             }
             else {
                 dataOutputStream.writeUTF("200 OK");
-                dataOutputStream.writeUTF("Please input new MOTD to be added.");
+                dataOutputStream.writeUTF("Please input new Message of the day to be added.");
                 message = dataInputStream.readUTF();
-                dataOutputStream.writeUTF("200 OK");
-                Writer wr = new FileWriter("src/motd.txt",true);
-                BufferedWriter br = new BufferedWriter(wr);
-                br.write(message);
-                br.newLine();
-                br.close();
+                if(messageCount>=20){
+                    dataOutputStream.writeUTF("429 Limit exceed for storing message: maxLimit=20 messages");
+                }
+                else {
+                    dataOutputStream.writeUTF("200 OK");
+                    Writer wr = new FileWriter("messageDir.txt", true);
+                    BufferedWriter br = new BufferedWriter(wr);
+                    br.write(message);
+                    br.newLine();
+                    br.close();
+                }
 
 
             }
@@ -202,16 +205,13 @@ public class Server {
         Scanner scanner;
         try {
             activeUser="";
-            scanner = new Scanner(new File("src/motd.txt"));
+            scanner = new Scanner(new File("messageDir.txt"));
             while ((scanner.hasNextLine())) {
                 message = scanner.nextLine();
                 messageOfTheDay[messageCount] = message;
                 messageCount++; //this is kept track of so we know when to loop back to the start
             }
             scanner.close();
-            for(int i = 0; i < messageCount; i++) {
-                System.out.println(messageOfTheDay[i]);
-            }
         } catch (FileNotFoundException ex) {
             Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -222,7 +222,7 @@ public class Server {
             ServerSocket serverSocket;
             serverSocket = new ServerSocket(SERVER_PORT);
             DataOutputStream os;
-            while(serverContinue) { //the job of the main thread is to sit and listen for new socket connections
+            while(serverContinue) {
                 socketClient = serverSocket.accept();
                 DataOutputStream out = new DataOutputStream(socketClient.getOutputStream());
                 InetAddress inetAddress = socketClient.getInetAddress();
@@ -258,20 +258,21 @@ public class Server {
                 dataOutputStream = new DataOutputStream(client.getOutputStream());
                 System.out.println("client port"+ client.getPort());
 
-                dataOutputStream.writeUTF("connected to server");
+                dataOutputStream.writeUTF("Connected to Server.");
 
                 List<String> inputValidation= Arrays.asList("MSGGET","MSGSTORE","QUIT","SHUTDOWN","LOGOUT");
 
                 System.out.println(inetAddress.getHostAddress()+ "  connected ");
                 while ((message = dataInputStream.readUTF()) != null && proceed == true)
                 {
-                    if(!inputValidation.contains(message)){
-                        System.out.println("INVALID COMMAND PROVIDED");
-                    }
+
                     if(message.startsWith("LOGIN",0)) {
                         activeUser = loginUser(dataOutputStream, activeUser, message, client);
                     }
                     else {
+                        if(!inputValidation.contains(message)){
+                            System.out.println("INVALID COMMAND PROVIDED"); //validating if any invalid command are provided
+                        }
                         switch(message) {
                             case "MSGGET" :
                                 activeMessageCount = sendMessageOfTheDay(dataOutputStream, messageOfTheDay, activeMessageCount, messageCount, client);
@@ -280,8 +281,11 @@ public class Server {
                                 activeUser = userLogout(dataOutputStream, activeUser, client);
                                 break;
                             case "MSGSTORE" :
-                                messageOfTheDay[messageCount] = saveUserMessage(dataInputStream, dataOutputStream, messageOfTheDay, messageCount, message, activeUser, client); //the next empty element in array is filled with a string
-                                messageCount++;
+                                String msg= saveUserMessage(dataInputStream, dataOutputStream, messageOfTheDay, messageCount, message, activeUser, client); //the next empty element in array is filled with a string
+                                if(msg!=null && !msg.equals(" ") && !msg.equals("")) {
+                                    messageOfTheDay[messageCount] = msg;
+                                    messageCount++;
+                                }
                                 break;
                             case "SHUTDOWN" :
                                 proceed = shutdown(dataOutputStream, proceed, activeUser, client);
@@ -290,12 +294,12 @@ public class Server {
                                     dataOutputStream = new DataOutputStream(socket.getOutputStream());
                                     dataOutputStream.writeUTF("Server shutting down...");
                                     dataOutputStream.flush();
-                                    System.exit(0);// make 2 later
+                                    System.exit(2); //using exit 2 code for SHUTDOWN command
                                 }
                                 break;
                             case "QUIT" :
                                 quitClient(dataOutputStream, client);
-                                activeUser="";
+                                activeUser=""; //user will get logged out on quit
                                 break;
                             default :
 
@@ -330,7 +334,7 @@ public class Server {
                 //close input and output stream and socket. we only reach this if the user calls quit() successfully
                 client.close();
             } catch (IOException ex) { //handling disconnections here ensures that we can clean up the user's info even if the disconnection was abrupt
-                System.out.println("User disconnected." + ex);
+                System.out.println("User disconnected.");
 
                 if(socket == client) {
                     if(!activeUser.equals("")) {
